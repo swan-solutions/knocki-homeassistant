@@ -76,22 +76,22 @@ To run just the Python tests:
 poetry run pytest
 ```
 
-[build-shield]: https://github.com/airgradienthq/python-airgradient/actions/workflows/tests.yaml/badge.svg
-[build]: https://github.com/airgradienthq/python-airgradient/actions
-[codecov-shield]: https://codecov.io/gh/airgradienthq/python-airgradient/branch/master/graph/badge.svg
-[codecov]: https://codecov.io/gh/airgradienthq/python-airgradient
-[commits-shield]: https://img.shields.io/github/commit-activity/y/airgradienthq/python-airgradient.svg
-[commits]: https://github.com/airgradienthq/python-airgradient/commits/master
-[contributors]: https://github.com/airgradienthq/python-airgradient/graphs/contributors
+[build-shield]: https://github.com/swan-solutions/knocki-homeassistant/actions/workflows/tests.yaml/badge.svg
+[build]: https://github.com/swan-solutions/knocki-homeassistant/actions
+[codecov-shield]: https://codecov.io/gh/swan-solutions/knocki-homeassistant/branch/master/graph/badge.svg
+[codecov]: https://codecov.io/gh/swan-solutions/knocki-homeassistant
+[commits-shield]: https://img.shields.io/github/commit-activity/y/swan-solutions/knocki-homeassistant.svg
+[commits]: https://github.com/swan-solutions/knocki-homeassistant/commits/master
+[contributors]: https://github.com/swan-solutions/knocki-homeassistant/graphs/contributors
 [keepchangelog]: http://keepachangelog.com/en/1.0.0/
-[license-shield]: https://img.shields.io/github/license/airgradienthq/python-airgradient.svg
+[license-shield]: https://img.shields.io/github/license/swan-solutions/knocki-homeassistant.svg
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2024.svg
 [poetry-install]: https://python-poetry.org/docs/#installation
 [poetry]: https://python-poetry.org
 [pre-commit]: https://pre-commit.com/
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-stable-green.svg
-[python-versions-shield]: https://img.shields.io/pypi/pyversions/airgradient
-[releases-shield]: https://img.shields.io/github/release/airgradienthq/python-airgradient.svg
-[releases]: https://github.com/airgradienthq/python-airgradient/releases
+[python-versions-shield]: https://img.shields.io/pypi/pyversions/knocki
+[releases-shield]: https://img.shields.io/github/release/swan-solutions/knocki-homeassistant.svg
+[releases]: https://github.com/swan-solutions/knocki-homeassistant/releases
 [semver]: http://semver.org/spec/v2.0.0.html
-[pypi]: https://pypi.org/project/airgradient/
+[pypi]: https://pypi.org/project/knocki/
