@@ -1,0 +1,7 @@
+# serializer version: 1
+# name: test_login
+  dict({
+    'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYWFhYWFhYS04Y2M3LTQzYWEtYmM1ZS05NjhhNzEzYjM0YjIiLCJlbWFpbCI6InRlc3RAdGVzdC5jb20iLCJwd2QiOiJBQTFGNURFNEMwIiwidGYiOmZhbHNlLCJhZ2VudCI6IlBvc3RtYW5SdW50aW1lLzcuMzkuMCIsImlhdCI6MTcxNzU5MzE1Mn0.fxwTBm-JsxWCCTt9QCBQzgK-6sjL0TCeKKtp5_B2iek',
+    'user_id': 'aaaaaaaa-8cc7-43aa-bc5e-968a713b34b2',
+  })
+# ---

@@ -1,0 +1,111 @@
+"""Asynchronous Python client for Knocki."""
+
+from __future__ import annotations
+
+import asyncio
+from datetime import datetime, timezone
+import json
+from typing import TYPE_CHECKING, Any
+
+import aiohttp
+from aiohttp.hdrs import METH_POST
+from aioresponses import CallbackResult, aioresponses
+import pytest
+
+from knocki import KnockiClient, KnockiError, KnockiConnectionError
+from . import load_fixture
+from .const import HEADERS, BASE_URL, UNAUTHORIZED_HEADERS
+
+if TYPE_CHECKING:
+    from syrupy import SnapshotAssertion
+
+
+async def test_putting_in_own_session(
+    responses: aioresponses,
+) -> None:
+    """Test putting in own session."""
+    responses.post(
+        f"{BASE_URL}/tokens",
+        status=200,
+        body=load_fixture("tokens.json"),
+    )
+    async with aiohttp.ClientSession() as session:
+        knocki = KnockiClient(session=session)
+        await knocki.login("test@test.com", "test")
+        assert knocki.session is not None
+        assert not knocki.session.closed
+        await knocki.close()
+        assert not knocki.session.closed
+
+
+async def test_creating_own_session(
+    responses: aioresponses,
+) -> None:
+    """Test creating own session."""
+    responses.post(
+        f"{BASE_URL}/tokens",
+        status=200,
+        body=load_fixture("tokens.json"),
+    )
+    knocki = KnockiClient()
+    await knocki.login("test@test.com", "test")
+    assert knocki.session is not None
+    assert not knocki.session.closed
+    await knocki.close()
+    assert knocki.session.closed
+
+
+async def test_unexpected_server_response(
+    responses: aioresponses,
+    knocki_client: KnockiClient,
+) -> None:
+    """Test handling unexpected response."""
+    responses.post(
+        f"{BASE_URL}/tokens",
+        status=200,
+        headers={"Content-Type": "plain/text"},
+        body="Yes",
+    )
+    with pytest.raises(KnockiError):
+        assert await knocki_client.login("test@test.com", "test")
+
+
+async def test_timeout(
+    responses: aioresponses,
+) -> None:
+    """Test request timeout."""
+
+    # Faking a timeout by sleeping
+    async def response_handler(_: str, **_kwargs: Any) -> CallbackResult:
+        """Response handler for this test."""
+        await asyncio.sleep(2)
+        return CallbackResult(body="Goodmorning!")
+
+    responses.post(
+        f"{BASE_URL}/tokens",
+        callback=response_handler,
+    )
+    async with KnockiClient(request_timeout=1) as knocki:
+        with pytest.raises(KnockiConnectionError):
+            assert await knocki.login("test@test.com", "test")
+
+
+
+async def test_login(
+    responses: aioresponses,
+    knocki_client: KnockiClient,
+    snapshot: SnapshotAssertion
+) -> None:
+    """Test logging in."""
+    responses.post(
+        f"{BASE_URL}/tokens",
+        status=200,
+        body=load_fixture("tokens.json"),
+    )
+    assert await knocki_client.login("test@test.com", "test") == snapshot
+    responses.assert_called_once_with(
+        f"{BASE_URL}/tokens",
+        METH_POST,
+        headers=UNAUTHORIZED_HEADERS,
+        json={"data": [{"type": "tokens", "attributes": {"email": "test@test.com", "password": "test", "type": "auth"}}]},
+    )
