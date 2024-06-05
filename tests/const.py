@@ -15,4 +15,3 @@ HEADERS = {
     **UNAUTHORIZED_HEADERS,
     "Authorization": "Bearer test",
 }
-

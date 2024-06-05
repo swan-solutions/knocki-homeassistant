@@ -8,9 +8,9 @@ from dataclasses import dataclass
 from importlib import metadata
 from typing import TYPE_CHECKING, Any
 
-import orjson
 from aiohttp import ClientSession
-from aiohttp.hdrs import METH_GET, METH_PUT, METH_POST
+from aiohttp.hdrs import METH_GET, METH_POST
+import orjson
 from yarl import URL
 
 from knocki.exceptions import KnockiConnectionError
@@ -26,6 +26,7 @@ _URLS = {
     True: "staging.knocki.com",
     False: "production.knocki.com",
 }
+
 
 @dataclass
 class KnockiClient:
@@ -88,7 +89,7 @@ class KnockiClient:
                     "attributes": {
                         "email": email,
                         "password": password,
-                        "type": "auth"
+                        "type": "auth",
                     },
                 }
             ]

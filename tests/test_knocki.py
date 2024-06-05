@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
-import json
 from typing import TYPE_CHECKING, Any
 
 import aiohttp
@@ -12,9 +10,10 @@ from aiohttp.hdrs import METH_POST
 from aioresponses import CallbackResult, aioresponses
 import pytest
 
-from knocki import KnockiClient, KnockiError, KnockiConnectionError
+from knocki import KnockiClient, KnockiConnectionError, KnockiError
+
 from . import load_fixture
-from .const import HEADERS, BASE_URL, UNAUTHORIZED_HEADERS
+from .const import BASE_URL, UNAUTHORIZED_HEADERS
 
 if TYPE_CHECKING:
     from syrupy import SnapshotAssertion
@@ -90,11 +89,8 @@ async def test_timeout(
             assert await knocki.login("test@test.com", "test")
 
 
-
 async def test_login(
-    responses: aioresponses,
-    knocki_client: KnockiClient,
-    snapshot: SnapshotAssertion
+    responses: aioresponses, knocki_client: KnockiClient, snapshot: SnapshotAssertion
 ) -> None:
     """Test logging in."""
     responses.post(
@@ -107,5 +103,16 @@ async def test_login(
         f"{BASE_URL}/tokens",
         METH_POST,
         headers=UNAUTHORIZED_HEADERS,
-        json={"data": [{"type": "tokens", "attributes": {"email": "test@test.com", "password": "test", "type": "auth"}}]},
+        json={
+            "data": [
+                {
+                    "type": "tokens",
+                    "attributes": {
+                        "email": "test@test.com",
+                        "password": "test",
+                        "type": "auth",
+                    },
+                }
+            ]
+        },
     )
