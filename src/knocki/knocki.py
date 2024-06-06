@@ -9,7 +9,7 @@ from importlib import metadata
 from typing import TYPE_CHECKING, Any
 
 from aiohttp import ClientSession
-from aiohttp.hdrs import METH_GET, METH_POST
+from aiohttp.hdrs import METH_GET, METH_POST, METH_DELETE
 import orjson
 from yarl import URL
 
@@ -52,6 +52,9 @@ class KnockiClient:
             "User-Agent": f"PythonKnocki/{VERSION}",
             "Accept": "application/json",
         }
+
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
 
         if self.session is None:
             self.session = ClientSession()
@@ -98,6 +101,14 @@ class KnockiClient:
         response = await self._request("tokens", method=METH_POST, data=data)
 
         return TokenResponse.from_api(response)
+
+    async def link(self) -> None:
+        """Link Knocki account."""
+        await self._request("accounts/homeassistant/v1/link", method=METH_POST)
+
+    async def unlink(self) -> None:
+        """Unlink Knocki account."""
+        await self._request("accounts/homeassistant", method=METH_DELETE)
 
     async def close(self) -> None:
         """Close open client session."""

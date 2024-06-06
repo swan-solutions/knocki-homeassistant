@@ -6,14 +6,14 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 import aiohttp
-from aiohttp.hdrs import METH_POST
+from aiohttp.hdrs import METH_POST, METH_DELETE
 from aioresponses import CallbackResult, aioresponses
 import pytest
 
 from knocki import KnockiClient, KnockiConnectionError, KnockiError
 
 from . import load_fixture
-from .const import BASE_URL, UNAUTHORIZED_HEADERS
+from .const import BASE_URL, UNAUTHORIZED_HEADERS, HEADERS
 
 if TYPE_CHECKING:
     from syrupy import SnapshotAssertion
@@ -115,4 +115,38 @@ async def test_login(
                 }
             ]
         },
+    )
+
+async def test_link(
+    responses: aioresponses, authenticated_client: KnockiClient
+) -> None:
+    """Test linking."""
+    responses.post(
+        f"{BASE_URL}/accounts/homeassistant/v1/link",
+        status=200,
+        body="{}"
+    )
+    await authenticated_client.link()
+    responses.assert_called_once_with(
+        f"{BASE_URL}/accounts/homeassistant/v1/link",
+        METH_POST,
+        headers=HEADERS,
+        json=None,
+    )
+
+async def test_unlink(
+    responses: aioresponses, authenticated_client: KnockiClient
+) -> None:
+    """Test unlinking."""
+    responses.delete(
+        f"{BASE_URL}/accounts/homeassistant",
+        status=200,
+        body="{}"
+    )
+    await authenticated_client.unlink()
+    responses.assert_called_once_with(
+        f"{BASE_URL}/accounts/homeassistant",
+        METH_DELETE,
+        headers=HEADERS,
+        json=None,
     )
