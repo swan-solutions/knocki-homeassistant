@@ -9,12 +9,12 @@ from importlib import metadata
 from typing import TYPE_CHECKING, Any
 
 from aiohttp import ClientSession
-from aiohttp.hdrs import METH_GET, METH_POST, METH_DELETE
+from aiohttp.hdrs import METH_DELETE, METH_GET, METH_POST
 import orjson
 from yarl import URL
 
 from knocki.exceptions import KnockiConnectionError
-from knocki.models import TokenResponse
+from knocki.models import TokenResponse, Trigger, TriggerResponse
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -44,7 +44,7 @@ class KnockiClient:
         *,
         method: str = METH_GET,
         data: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    ) -> str:
         """Handle a request to Knocki."""
         url = URL.build(scheme="https", host=_URLS[self.staging]).joinpath(uri)
 
@@ -81,7 +81,7 @@ class KnockiClient:
                 {"Content-Type": content_type, "response": text},
             )
 
-        return orjson.loads(await response.text())
+        return await response.text()
 
     async def login(self, email: str, password: str) -> TokenResponse:
         """Login to Knocki."""
@@ -100,7 +100,7 @@ class KnockiClient:
 
         response = await self._request("tokens", method=METH_POST, data=data)
 
-        return TokenResponse.from_api(response)
+        return TokenResponse.from_api(orjson.loads(response))  # pylint: disable=maybe-no-member
 
     async def link(self) -> None:
         """Link Knocki account."""
@@ -109,6 +109,11 @@ class KnockiClient:
     async def unlink(self) -> None:
         """Unlink Knocki account."""
         await self._request("accounts/homeassistant", method=METH_DELETE)
+
+    async def get_triggers(self) -> list[Trigger]:
+        """Get triggers from Knocki."""
+        response = await self._request("accounts/homeassistant")
+        return TriggerResponse.from_json(response).data
 
     async def close(self) -> None:
         """Close open client session."""

@@ -6,14 +6,14 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 import aiohttp
-from aiohttp.hdrs import METH_POST, METH_DELETE
+from aiohttp.hdrs import METH_DELETE, METH_GET, METH_POST
 from aioresponses import CallbackResult, aioresponses
 import pytest
 
 from knocki import KnockiClient, KnockiConnectionError, KnockiError
 
 from . import load_fixture
-from .const import BASE_URL, UNAUTHORIZED_HEADERS, HEADERS
+from .const import BASE_URL, HEADERS, UNAUTHORIZED_HEADERS
 
 if TYPE_CHECKING:
     from syrupy import SnapshotAssertion
@@ -117,15 +117,12 @@ async def test_login(
         },
     )
 
+
 async def test_link(
     responses: aioresponses, authenticated_client: KnockiClient
 ) -> None:
     """Test linking."""
-    responses.post(
-        f"{BASE_URL}/accounts/homeassistant/v1/link",
-        status=200,
-        body="{}"
-    )
+    responses.post(f"{BASE_URL}/accounts/homeassistant/v1/link", status=200, body="{}")
     await authenticated_client.link()
     responses.assert_called_once_with(
         f"{BASE_URL}/accounts/homeassistant/v1/link",
@@ -134,19 +131,33 @@ async def test_link(
         json=None,
     )
 
+
 async def test_unlink(
     responses: aioresponses, authenticated_client: KnockiClient
 ) -> None:
     """Test unlinking."""
-    responses.delete(
-        f"{BASE_URL}/accounts/homeassistant",
-        status=200,
-        body="{}"
-    )
+    responses.delete(f"{BASE_URL}/accounts/homeassistant", status=200, body="{}")
     await authenticated_client.unlink()
     responses.assert_called_once_with(
         f"{BASE_URL}/accounts/homeassistant",
         METH_DELETE,
         headers=HEADERS,
         json=None,
+    )
+
+
+async def test_get_triggers(
+    responses: aioresponses,
+    authenticated_client: KnockiClient,
+    snapshot: SnapshotAssertion,
+) -> None:
+    """Test logging in."""
+    responses.get(
+        f"{BASE_URL}/accounts/homeassistant",
+        status=200,
+        body=load_fixture("triggers.json"),
+    )
+    assert await authenticated_client.get_triggers() == snapshot
+    responses.assert_called_once_with(
+        f"{BASE_URL}/accounts/homeassistant", METH_GET, headers=HEADERS, json=None
     )
