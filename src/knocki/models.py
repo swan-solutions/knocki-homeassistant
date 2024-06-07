@@ -26,13 +26,6 @@ class TokenResponse:
 
 
 @dataclass
-class TriggerResponse(DataClassORJSONMixin):
-    """Trigger response model."""
-
-    data: list[Trigger]
-
-
-@dataclass
 class Trigger(DataClassORJSONMixin):
     """Trigger model."""
 

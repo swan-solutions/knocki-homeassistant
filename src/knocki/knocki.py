@@ -10,11 +10,12 @@ from typing import TYPE_CHECKING, Any
 
 from aiohttp import ClientSession
 from aiohttp.hdrs import METH_DELETE, METH_GET, METH_POST
+from mashumaro.codecs.orjson import ORJSONDecoder
 import orjson
 from yarl import URL
 
 from knocki.exceptions import KnockiConnectionError
-from knocki.models import TokenResponse, Trigger, TriggerResponse
+from knocki.models import TokenResponse, Trigger
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -113,7 +114,7 @@ class KnockiClient:
     async def get_triggers(self) -> list[Trigger]:
         """Get triggers from Knocki."""
         response = await self._request("actions/homeassistant")
-        return TriggerResponse.from_json(response).data
+        return ORJSONDecoder(list[Trigger]).decode(response)
 
     async def close(self) -> None:
         """Close open client session."""
