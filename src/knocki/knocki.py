@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 from asyncio import timeout
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib import metadata
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from aiohttp import ClientSession
 from aiohttp.hdrs import METH_DELETE, METH_GET, METH_POST
@@ -15,7 +15,7 @@ import orjson
 from yarl import URL
 
 from knocki.exceptions import KnockiConnectionError
-from knocki.models import TokenResponse, Trigger
+from knocki.models import EventType, TokenResponse, Trigger
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -28,6 +28,8 @@ _URLS = {
     False: "production.knocki.com",
 }
 
+WEB_SOCKET_URL = "wss://ivg6nmkds4.execute-api.us-east-2.amazonaws.com/production"
+
 
 @dataclass
 class KnockiClient:
@@ -38,6 +40,9 @@ class KnockiClient:
     staging: bool = False
     request_timeout: int = 10
     _close_session: bool = False
+    _listeners: dict[EventType, list[Callable[[Any], None]]] = field(
+        default_factory=dict
+    )
 
     async def _request(
         self,
@@ -115,6 +120,34 @@ class KnockiClient:
         """Get triggers from Knocki."""
         response = await self._request("actions/homeassistant")
         return ORJSONDecoder(list[Trigger]).decode(response)
+
+    async def start_websocket(self) -> None:
+        """Start websocket connection."""
+        url = WEB_SOCKET_URL + f"?token={self.token}"
+
+        if self.session is None:
+            self.session = ClientSession()
+            self._close_session = True
+
+        try:
+            async with self.session.ws_connect(url) as ws:
+                async for msg in ws:
+                    data = orjson.loads(msg.data)  # pylint: disable=maybe-no-member
+                    event_type = EventType(data["event"])
+                    for listener in self._listeners.get(event_type, []):
+                        listener(data)
+        except Exception as exception:
+            err_msg = "Error occurred while connecting to Knocki websocket"
+            raise KnockiConnectionError(err_msg) from exception
+
+    def register_listener(
+        self, event_type: EventType, listener: Callable[[Any], None]
+    ) -> None:
+        """Register a listener."""
+        if event_type not in self._listeners:
+            self._listeners[event_type] = [listener]
+        else:
+            self._listeners[event_type].append(listener)
 
     async def close(self) -> None:
         """Close open client session."""

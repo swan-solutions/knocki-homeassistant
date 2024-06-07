@@ -1,0 +1,17 @@
+{
+    "event": "actionUpdated",
+    "payload": {
+        "device": "KNC-A1W-T3706159",
+        "gesture": "3715c28d-b321-45e9-b23b-34478870859f",
+        "details": {
+            "description": "Aan",
+            "name": "Ah ah",
+            "id": 83
+        },
+        "type": "homeassistant",
+        "user": "2dd5833c-8cc7-43aa-bc5e-968a713b34b2",
+        "updatedAt": 1717749846933,
+        "createdAt": 1717749837674,
+        "id": "ae4eda70-d9f6-473f-b0a6-9811a3ab50fb"
+    }
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any, Self
 
 from mashumaro import field_options
@@ -39,3 +40,11 @@ class TriggerDetails(DataClassORJSONMixin):
 
     trigger_id: str = field(metadata=field_options(alias="id"))
     name: str = field(metadata=field_options(alias="name"))
+
+
+class EventType(StrEnum):
+    """Event types for Knocki."""
+
+    CREATED = "actionCreated"
+    UPDATED = "actionUpdated"
+    DELETED = "actionDeleted"

@@ -1,0 +1,17 @@
+{
+    "event": "actionCreated",
+    "payload": {
+        "device": "KNC-A1W-T3706159",
+        "gesture": "3715c28d-b321-45e9-b23b-34478870859f",
+        "details": {
+            "description": "Rest",
+            "name": "Test",
+            "id": 82
+        },
+        "type": "homeassistant",
+        "id": "8350ef4e-81d7-41ba-b1a3-538e46d3c227",
+        "user": "2dd5833c-8cc7-43aa-bc5e-968a713b34b2",
+        "updatedAt": 1717749399834,
+        "createdAt": 1717749399834
+    }
+}

@@ -1,0 +1,18 @@
+{
+    "event": "actionDeleted",
+    "payload": {
+        "device": "KNC-A1W-T3706159",
+        "gesture": "3715c28d-b321-45e9-b23b-34478870859f",
+        "details": {
+            "description": "Yes",
+            "name": "Knock knock",
+            "id": 81
+        },
+        "type": "homeassistant",
+        "user": "2dd5833c-8cc7-43aa-bc5e-968a713b34b2",
+        "updatedAt": 1717749380638,
+        "createdAt": 1717745100189,
+        "error": "account.unlinked",
+        "id": "7e923b68-5187-4c86-bfc2-75ac3212a34a"
+    }
+}
