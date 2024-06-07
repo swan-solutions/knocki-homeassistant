@@ -153,11 +153,11 @@ async def test_get_triggers(
 ) -> None:
     """Test logging in."""
     responses.get(
-        f"{BASE_URL}/accounts/homeassistant",
+        f"{BASE_URL}/actions/homeassistant",
         status=200,
         body=load_fixture("triggers.json"),
     )
     assert await authenticated_client.get_triggers() == snapshot
     responses.assert_called_once_with(
-        f"{BASE_URL}/accounts/homeassistant", METH_GET, headers=HEADERS, json=None
+        f"{BASE_URL}/actions/homeassistant", METH_GET, headers=HEADERS, json=None
     )

@@ -112,7 +112,7 @@ class KnockiClient:
 
     async def get_triggers(self) -> list[Trigger]:
         """Get triggers from Knocki."""
-        response = await self._request("accounts/homeassistant")
+        response = await self._request("actions/homeassistant")
         return TriggerResponse.from_json(response).data
 
     async def close(self) -> None:
