@@ -151,7 +151,7 @@ async def test_get_triggers(
     authenticated_client: KnockiClient,
     snapshot: SnapshotAssertion,
 ) -> None:
-    """Test logging in."""
+    """Test getting triggers."""
     responses.get(
         f"{BASE_URL}/actions/homeassistant",
         status=200,
