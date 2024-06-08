@@ -15,7 +15,7 @@ import orjson
 from yarl import URL
 
 from knocki.exceptions import KnockiConnectionError
-from knocki.models import EventType, TokenResponse, Trigger
+from knocki.models import Event, EventType, TokenResponse, Trigger
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -40,7 +40,7 @@ class KnockiClient:
     staging: bool = False
     request_timeout: int = 10
     _close_session: bool = False
-    _listeners: dict[EventType, list[Callable[[Any], None]]] = field(
+    _listeners: dict[EventType, list[Callable[[Event], None]]] = field(
         default_factory=dict
     )
 
@@ -132,22 +132,22 @@ class KnockiClient:
         try:
             async with self.session.ws_connect(url) as ws:
                 async for msg in ws:
-                    data = orjson.loads(msg.data)  # pylint: disable=maybe-no-member
-                    event_type = EventType(data["event"])
-                    for listener in self._listeners.get(event_type, []):
-                        listener(data)
+                    event = Event.from_json(msg.data)  # pylint: disable=maybe-no-member
+                    for listener in self._listeners.get(event.event, []):
+                        listener(event)
         except Exception as exception:
             err_msg = "Error occurred while connecting to Knocki websocket"
             raise KnockiConnectionError(err_msg) from exception
 
     def register_listener(
-        self, event_type: EventType, listener: Callable[[Any], None]
-    ) -> None:
+        self, event_type: EventType, listener: Callable[[Event], None]
+    ) -> Callable[[], None]:
         """Register a listener."""
         if event_type not in self._listeners:
             self._listeners[event_type] = [listener]
         else:
             self._listeners[event_type].append(listener)
+        return lambda: self._listeners[event_type].remove(listener)
 
     async def close(self) -> None:
         """Close open client session."""

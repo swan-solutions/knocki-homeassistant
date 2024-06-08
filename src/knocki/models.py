@@ -48,3 +48,12 @@ class EventType(StrEnum):
     CREATED = "actionCreated"
     UPDATED = "actionUpdated"
     DELETED = "actionDeleted"
+    TRIGGERED = "actionTriggered"
+
+
+@dataclass
+class Event(DataClassORJSONMixin):
+    """Event model."""
+
+    event: EventType
+    payload: Trigger
