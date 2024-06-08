@@ -56,13 +56,11 @@ Changelog = "https://github.com/swan-solutions/knocki-homeassistant/releases"
 
 [tool.coverage.report]
 show_missing = true
+fail_under = 50
 
 [tool.coverage.run]
 plugins = ["covdefaults"]
 source = ["knocki"]
-
-[tool.coverage.cov]
-fail_under = 50
 
 [tool.mypy]
 # Specify the target platform details in config, so your developers are
