@@ -38,7 +38,7 @@ class Trigger(DataClassORJSONMixin):
 class TriggerDetails(DataClassORJSONMixin):
     """Trigger details model."""
 
-    trigger_id: str = field(metadata=field_options(alias="id"))
+    trigger_id: int = field(metadata=field_options(alias="id"))
     name: str = field(metadata=field_options(alias="name"))
 
 
