@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 VERSION = metadata.version(__package__)
 
 _URLS = {
-    True: "staging.knocki.com",
+    True: "stage.knocki.com",
     False: "production.knocki.com",
 }
 
