@@ -6,7 +6,7 @@ import asyncio
 from asyncio import timeout
 from dataclasses import dataclass, field
 from importlib import metadata
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
 from aiohttp import ClientSession
 from aiohttp.hdrs import METH_DELETE, METH_GET, METH_POST
@@ -40,8 +40,8 @@ class KnockiClient:
     staging: bool = False
     request_timeout: int = 10
     _close_session: bool = False
-    _listeners: dict[EventType, list[Callable[[Event], None]]] = field(
-        default_factory=dict
+    _listeners: dict[EventType, list[Callable[[Event], Awaitable[None] | None]]] = (
+        field(default_factory=dict)
     )
 
     async def _request(
@@ -134,13 +134,16 @@ class KnockiClient:
                 async for msg in ws:
                     event = Event.from_json(msg.data)  # pylint: disable=maybe-no-member
                     for listener in self._listeners.get(event.event, []):
-                        listener(event)
+                        if asyncio.iscoroutinefunction(listener):
+                            await listener(event)
+                        else:
+                            listener(event)
         except Exception as exception:
             err_msg = "Error occurred while connecting to Knocki websocket"
             raise KnockiConnectionError(err_msg) from exception
 
     def register_listener(
-        self, event_type: EventType, listener: Callable[[Event], None]
+        self, event_type: EventType, listener: Callable[[Event], Awaitable[None] | None]
     ) -> Callable[[], None]:
         """Register a listener."""
         if event_type not in self._listeners:
