@@ -1,0 +1,12 @@
+{
+  "errors": [
+    {
+      "status": "400",
+      "code": "password",
+      "title": "Password does not match",
+      "source": {
+        "pointer": "/data/attributes/password"
+      }
+    }
+  ]
+}

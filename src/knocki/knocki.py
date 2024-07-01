@@ -14,7 +14,7 @@ from mashumaro.codecs.orjson import ORJSONDecoder
 import orjson
 from yarl import URL
 
-from knocki.exceptions import KnockiConnectionError
+from knocki.exceptions import KnockiConnectionError, KnockiInvalidAuthError
 from knocki.models import Event, EventType, TokenResponse, Trigger
 
 if TYPE_CHECKING:
@@ -105,8 +105,11 @@ class KnockiClient:
         }
 
         response = await self._request("tokens", method=METH_POST, data=data)
-
-        return TokenResponse.from_api(orjson.loads(response))  # pylint: disable=maybe-no-member
+        data = orjson.loads(response)  # pylint: disable=maybe-no-member
+        if "errors" in data:
+            msg = "Invalid credentials"
+            raise KnockiInvalidAuthError(msg)
+        return TokenResponse.from_api(data)
 
     async def link(self) -> None:
         """Link Knocki account."""
