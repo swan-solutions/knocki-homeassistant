@@ -7,3 +7,7 @@ class KnockiError(Exception):
 
 class KnockiConnectionError(KnockiError):
     """Knocki connection exception."""
+
+
+class KnockiInvalidAuthError(KnockiError):
+    """Knocki invalid auth exception."""

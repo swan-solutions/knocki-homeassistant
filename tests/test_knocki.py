@@ -10,7 +10,12 @@ from aiohttp.hdrs import METH_DELETE, METH_GET, METH_POST
 from aioresponses import CallbackResult, aioresponses
 import pytest
 
-from knocki import KnockiClient, KnockiConnectionError, KnockiError
+from knocki import (
+    KnockiClient,
+    KnockiConnectionError,
+    KnockiError,
+    KnockiInvalidAuthError,
+)
 
 from . import load_fixture
 from .const import BASE_URL, HEADERS, UNAUTHORIZED_HEADERS
@@ -116,6 +121,19 @@ async def test_login(
             ]
         },
     )
+
+
+async def test_invalig_login(
+    responses: aioresponses, knocki_client: KnockiClient
+) -> None:
+    """Test logging in."""
+    responses.post(
+        f"{BASE_URL}/tokens",
+        status=200,
+        body=load_fixture("invalid_auth.json"),
+    )
+    with pytest.raises(KnockiInvalidAuthError):
+        assert await knocki_client.login("test@test.com", "test")
 
 
 async def test_link(
