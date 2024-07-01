@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from importlib import metadata
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, WSMsgType
 from aiohttp.hdrs import METH_DELETE, METH_GET, METH_POST
 from mashumaro.codecs.orjson import ORJSONDecoder
 import orjson
@@ -129,18 +129,22 @@ class KnockiClient:
             self.session = ClientSession()
             self._close_session = True
 
-        try:
-            async with self.session.ws_connect(url) as ws:
-                async for msg in ws:
-                    event = Event.from_json(msg.data)  # pylint: disable=maybe-no-member
-                    for listener in self._listeners.get(event.event, []):
-                        if asyncio.iscoroutinefunction(listener):
-                            await listener(event)
-                        else:
-                            listener(event)
-        except Exception as exception:
-            err_msg = "Error occurred while connecting to Knocki websocket"
-            raise KnockiConnectionError(err_msg) from exception
+        while True:
+            try:
+                async with self.session.ws_connect(url) as ws:
+                    async for msg in ws:
+                        if msg.data == WSMsgType.CLOSE:  # pylint: disable=maybe-no-member
+                            await ws.close()
+                            break
+                        event = Event.from_json(msg.data)  # pylint: disable=maybe-no-member
+                        for listener in self._listeners.get(event.event, []):
+                            if asyncio.iscoroutinefunction(listener):
+                                await listener(event)
+                            else:
+                                listener(event)
+            except Exception as exception:
+                err_msg = "Error occurred while connecting to Knocki websocket"
+                raise KnockiConnectionError(err_msg) from exception
 
     def register_listener(
         self, event_type: EventType, listener: Callable[[Event], Awaitable[None] | None]
