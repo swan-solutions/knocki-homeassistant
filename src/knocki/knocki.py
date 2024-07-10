@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 from asyncio import timeout
 from dataclasses import dataclass, field
-from importlib import metadata
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
 from aiohttp import ClientSession, WSMsgType
@@ -20,8 +19,6 @@ from knocki.models import Event, EventType, TokenResponse, Trigger
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-
-VERSION = metadata.version(__package__)
 
 _URLS = {
     True: "stage.knocki.com",
@@ -58,7 +55,7 @@ class KnockiClient:
         url = URL.build(scheme="https", host=_URLS[self.staging]).joinpath(uri)
 
         headers = {
-            "User-Agent": f"PythonKnocki/{VERSION}",
+            "User-Agent": "com.knocki.mobileapp",
             "Accept": "application/json",
         }
 
