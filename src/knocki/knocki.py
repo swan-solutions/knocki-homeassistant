@@ -28,7 +28,10 @@ _URLS = {
     False: "production.knocki.com",
 }
 
-WEB_SOCKET_URL = "wss://ivg6nmkds4.execute-api.us-east-2.amazonaws.com/production"
+_WEB_SOCKET_URL = {
+    True: "wss://ivg6nmkds4.execute-api.us-east-2.amazonaws.com/production",
+    False: "wss://gso8jm7sri.execute-api.us-west-2.amazonaws.com/production",
+}
 
 
 @dataclass
@@ -126,7 +129,7 @@ class KnockiClient:
 
     async def start_websocket(self) -> None:
         """Start websocket connection."""
-        url = WEB_SOCKET_URL + f"?token={self.token}"
+        url = _WEB_SOCKET_URL[self.staging] + f"?token={self.token}"
 
         if self.session is None:
             self.session = ClientSession()
