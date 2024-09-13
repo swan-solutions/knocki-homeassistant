@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from asyncio import timeout
 from dataclasses import dataclass, field
+import logging
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
 from aiohttp import ClientSession, WSMsgType
@@ -29,6 +30,8 @@ _WEB_SOCKET_URL = {
     True: "wss://ivg6nmkds4.execute-api.us-east-2.amazonaws.com/production",
     False: "wss://gso8jm7sri.execute-api.us-west-2.amazonaws.com/production",
 }
+
+LOGGER = logging.getLogger(__package__)
 
 
 @dataclass
@@ -133,12 +136,16 @@ class KnockiClient:
             self._close_session = True
 
         while True:
+            LOGGER.debug("Connecting to Knocki websocket")
             try:
                 async with self.session.ws_connect(url) as ws:
+                    LOGGER.debug("Connected to Knocki websocket")
                     async for msg in ws:
                         if msg.data == WSMsgType.CLOSE:  # pylint: disable=maybe-no-member
+                            LOGGER.debug("Knocki websocket closed")
                             await ws.close()
                             break
+                        LOGGER.debug("Received message from Knocki websocket")
                         event = Event.from_json(msg.data)  # pylint: disable=maybe-no-member
                         for listener in self._listeners.get(event.event, []):
                             if asyncio.iscoroutinefunction(listener):
@@ -147,6 +154,7 @@ class KnockiClient:
                                 listener(event)
             except Exception as exception:
                 err_msg = "Error occurred while connecting to Knocki websocket"
+                LOGGER.exception(err_msg)
                 raise KnockiConnectionError(err_msg) from exception
 
     def register_listener(
