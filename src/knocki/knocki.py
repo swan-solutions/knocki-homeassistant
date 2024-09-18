@@ -141,6 +141,9 @@ class KnockiClient:
                 async with self.session.ws_connect(url) as ws:
                     LOGGER.debug("Connected to Knocki websocket")
                     async for msg in ws:
+                        LOGGER.debug(
+                            "Received message from Knocki websocket %s", msg.data
+                        )  # pylint: disable=maybe-no-member
                         if msg.data == WSMsgType.CLOSE:  # pylint: disable=maybe-no-member
                             LOGGER.debug("Knocki websocket closed")
                             await ws.close()
@@ -156,6 +159,8 @@ class KnockiClient:
                 err_msg = "Error occurred while connecting to Knocki websocket"
                 LOGGER.exception(err_msg)
                 raise KnockiConnectionError(err_msg) from exception
+            finally:
+                LOGGER.debug("Reconnecting to Knocki websocket")
 
     def register_listener(
         self, event_type: EventType, listener: Callable[[Event], Awaitable[None] | None]
