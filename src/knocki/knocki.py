@@ -144,7 +144,7 @@ class KnockiClient:
                         LOGGER.debug(
                             "Received message from Knocki websocket %s", msg.data
                         )  # pylint: disable=maybe-no-member
-                        if msg.data == WSMsgType.CLOSE:  # pylint: disable=maybe-no-member
+                        if msg.type == WSMsgType.CLOSE:  # pylint: disable=maybe-no-member
                             LOGGER.debug("Knocki websocket closed")
                             await ws.close()
                             break
