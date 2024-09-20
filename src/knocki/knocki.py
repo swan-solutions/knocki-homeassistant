@@ -138,12 +138,16 @@ class KnockiClient:
         while True:
             LOGGER.debug("Connecting to Knocki websocket")
             try:
-                async with self.session.ws_connect(url) as ws:
+                async with self.session.ws_connect(url, heartbeat=300) as ws:
                     LOGGER.debug("Connected to Knocki websocket")
                     async for msg in ws:
                         LOGGER.debug(
                             "Received message from Knocki websocket %s", msg.data
                         )  # pylint: disable=maybe-no-member
+                        if msg.type == WSMsgType.ERROR:  # pylint: disable=maybe-no-member
+                            LOGGER.debug("Error occurred")
+                            if exc := ws.exception():
+                                LOGGER.error(exc)
                         if msg.type == WSMsgType.CLOSE:  # pylint: disable=maybe-no-member
                             LOGGER.debug("Knocki websocket closed")
                             await ws.close()
