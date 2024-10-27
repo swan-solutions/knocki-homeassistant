@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 import logging
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
-from aiohttp import ClientSession, WSMsgType
+from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 from aiohttp.hdrs import METH_DELETE, METH_GET, METH_POST
 from mashumaro.codecs.orjson import ORJSONDecoder
 import orjson
@@ -46,6 +46,8 @@ class KnockiClient:
     _listeners: dict[EventType, list[Callable[[Event], Awaitable[None] | None]]] = (
         field(default_factory=dict)
     )
+    _client: ClientWebSocketResponse | None = None
+    _rx_task: asyncio.Task[None] | None = None
 
     async def _request(
         self,
@@ -127,6 +129,11 @@ class KnockiClient:
         response = await self._request("actions/homeassistant")
         return ORJSONDecoder(list[Trigger]).decode(response)
 
+    @property
+    def connected(self) -> bool:
+        """Return if we're currently connected."""
+        return self._client is not None and not self._client.closed
+
     async def start_websocket(self) -> None:
         """Start websocket connection."""
         url = _WEB_SOCKET_URL[self.staging] + f"?token={self.token}"
@@ -135,36 +142,59 @@ class KnockiClient:
             self.session = ClientSession()
             self._close_session = True
 
+        if self.connected:
+            return
+
+        retry_count = 0
+        LOGGER.debug("Starting Knocki websocket")
         while True:
-            LOGGER.debug("Connecting to Knocki websocket")
             try:
-                async with self.session.ws_connect(url, heartbeat=300) as ws:
-                    LOGGER.debug("Connected to Knocki websocket")
-                    async for msg in ws:
-                        LOGGER.debug(
-                            "Received message from Knocki websocket %s", msg.data
-                        )  # pylint: disable=maybe-no-member
-                        if msg.type == WSMsgType.ERROR:  # pylint: disable=maybe-no-member
-                            LOGGER.debug("Error occurred")
-                            if exc := ws.exception():
-                                LOGGER.error(exc)
-                        if msg.type == WSMsgType.CLOSE:  # pylint: disable=maybe-no-member
-                            LOGGER.debug("Knocki websocket closed")
-                            await ws.close()
-                            break
-                        LOGGER.debug("Received message from Knocki websocket")
-                        event = Event.from_json(msg.data)  # pylint: disable=maybe-no-member
-                        for listener in self._listeners.get(event.event, []):
-                            if asyncio.iscoroutinefunction(listener):
-                                await listener(event)
-                            else:
-                                listener(event)
-            except Exception as exception:
-                err_msg = "Error occurred while connecting to Knocki websocket"
-                LOGGER.exception(err_msg)
-                raise KnockiConnectionError(err_msg) from exception
-            finally:
-                LOGGER.debug("Reconnecting to Knocki websocket")
+                LOGGER.debug("Trying to connect to Knocki websocket")
+                self._client = await self.session.ws_connect(url, heartbeat=300)
+
+                self._rx_task = asyncio.create_task(self._receive_messages())
+                LOGGER.debug("Connected to Knocki websocket")
+                retry_count = 0
+            except KnockiConnectionError:  # noqa: PERF203
+                LOGGER.warning("Failed to connect to Knocki websocket, retrying...")
+                await asyncio.sleep(2**retry_count)
+                retry_count += 1
+
+    async def _receive_messages(self) -> None:
+        """Receive messages."""
+        if TYPE_CHECKING:
+            assert self._client
+
+        try:
+            while self.connected:
+                msg = await self._client.receive()
+                match msg.type:
+                    case WSMsgType.CLOSE | WSMsgType.CLOSED | WSMsgType.CLOSING:
+                        LOGGER.debug("Knocki websocket closed")
+                        break
+                    case WSMsgType.ERROR:
+                        LOGGER.debug("Error occurred")
+                        if exc := self._client.exception():
+                            LOGGER.error(exc)
+                    case WSMsgType.TEXT:
+                        await self._process_text_message(msg.data)
+                    case WSMsgType.PING | WSMsgType.PONG:
+                        LOGGER.debug("Ping/Pong received")
+                    case _:
+                        LOGGER.debug("Unknown message type")
+        except Exception as exception:
+            err_msg = "Error occurred while connecting to Knocki websocket"
+            LOGGER.exception(err_msg)
+            raise KnockiConnectionError(err_msg) from exception
+
+    async def _process_text_message(self, data: str) -> None:
+        """Process text message."""
+        event = Event.from_json(data)
+        for listener in self._listeners.get(event.event, []):
+            if asyncio.iscoroutinefunction(listener):
+                await listener(event)
+            else:
+                listener(event)
 
     def register_listener(
         self, event_type: EventType, listener: Callable[[Event], Awaitable[None] | None]
