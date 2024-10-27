@@ -47,7 +47,6 @@ class KnockiClient:
         field(default_factory=dict)
     )
     _client: ClientWebSocketResponse | None = None
-    _rx_task: asyncio.Task[None] | None = None
 
     async def _request(
         self,
@@ -151,9 +150,8 @@ class KnockiClient:
             try:
                 LOGGER.debug("Trying to connect to Knocki websocket")
                 self._client = await self.session.ws_connect(url, heartbeat=300)
-
-                self._rx_task = asyncio.create_task(self._receive_messages())
                 LOGGER.debug("Connected to Knocki websocket")
+                await self._receive_messages()
                 retry_count = 0
             except KnockiConnectionError:  # noqa: PERF203
                 LOGGER.warning("Failed to connect to Knocki websocket, retrying...")
@@ -186,6 +184,9 @@ class KnockiClient:
             err_msg = "Error occurred while connecting to Knocki websocket"
             LOGGER.exception(err_msg)
             raise KnockiConnectionError(err_msg) from exception
+        finally:
+            if self.connected:
+                await self.close()
 
     async def _process_text_message(self, data: str) -> None:
         """Process text message."""
