@@ -147,6 +147,9 @@ class KnockiClient:
         self._rx_task = asyncio.create_task(self._connect())
 
     async def _connect(self) -> None:
+        if TYPE_CHECKING:
+            assert self.session
+
         url = _WEB_SOCKET_URL[self.staging] + f"?token={self.token}"
         retry_count = 0
         LOGGER.debug("Starting Knocki websocket")
