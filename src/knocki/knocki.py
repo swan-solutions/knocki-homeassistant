@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from asyncio import timeout
+from contextlib import suppress
 from dataclasses import dataclass, field
 import logging
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
@@ -42,6 +43,7 @@ class KnockiClient:
     session: ClientSession | None = None
     staging: bool = False
     request_timeout: int = 10
+    _rx_task: asyncio.Task[None] | None = None
     _close_session: bool = False
     _listeners: dict[EventType, list[Callable[[Event], Awaitable[None] | None]]] = (
         field(default_factory=dict)
@@ -135,8 +137,6 @@ class KnockiClient:
 
     async def start_websocket(self) -> None:
         """Start websocket connection."""
-        url = _WEB_SOCKET_URL[self.staging] + f"?token={self.token}"
-
         if self.session is None:
             self.session = ClientSession()
             self._close_session = True
@@ -144,6 +144,13 @@ class KnockiClient:
         if self.connected:
             return
 
+        self._rx_task = asyncio.create_task(self._connect())
+
+    async def _connect(self) -> None:
+        if TYPE_CHECKING:
+            assert self.session
+
+        url = _WEB_SOCKET_URL[self.staging] + f"?token={self.token}"
         retry_count = 0
         LOGGER.debug("Starting Knocki websocket")
         while True:
@@ -209,6 +216,10 @@ class KnockiClient:
 
     async def close(self) -> None:
         """Close open client session."""
+        if self._rx_task:
+            self._rx_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._rx_task
         if self.session and self._close_session:
             await self.session.close()
 
